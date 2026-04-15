@@ -3,6 +3,7 @@
 from sqlalchemy import create_engine
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
+from contextlib import asynccontextmanager
 
 from app.core.config import get_settings
 
@@ -39,6 +40,7 @@ SessionLocal = sessionmaker(
 )
 
 
+@asynccontextmanager
 async def get_async_session() -> AsyncSession:
     """Get async database session."""
     async with AsyncSessionLocal() as session:

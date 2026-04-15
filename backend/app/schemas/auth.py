@@ -1,6 +1,8 @@
 """Authentication schemas."""
 
 from typing import Optional
+from datetime import datetime
+from uuid import UUID
 
 from pydantic import BaseModel, EmailStr, Field
 
@@ -23,10 +25,10 @@ class UserUpdate(BaseModel):
 
 class UserResponse(UserBase):
     """User response schema."""
-    id: str
+    id: UUID
     is_active: bool = True
-    created_at: str
-    updated_at: Optional[str] = None
+    created_at: datetime
+    updated_at: Optional[datetime] = None
 
     class Config:
         from_attributes = True

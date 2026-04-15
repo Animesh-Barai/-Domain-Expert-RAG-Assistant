@@ -2,6 +2,7 @@
 
 from datetime import datetime
 from typing import Optional
+from uuid import UUID
 
 from pydantic import BaseModel, Field
 
@@ -25,8 +26,8 @@ class MessageUpdate(BaseModel):
 
 class MessageResponse(MessageBase):
     """Message response schema."""
-    id: str
-    chat_id: str
+    id: UUID
+    chat_id: UUID
     role: MessageRole
     created_at: datetime
 

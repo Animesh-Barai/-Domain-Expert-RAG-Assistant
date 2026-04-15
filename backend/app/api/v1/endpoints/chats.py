@@ -1,10 +1,11 @@
 """Chat endpoints with streaming support."""
 
 import json
-from typing import Any, Generator, List
+from typing import Any, Generator, List, Union
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.responses import StreamingResponse
+from fastapi_limiter.depends import RateLimiter
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_current_active_user, get_db
@@ -16,10 +17,15 @@ from app.schemas.message import MessageCreate, MessageResponse
 from app.services.rag_service import RAGService
 
 router = APIRouter()
-rag_service = RAGService()
+# Initialized inside endpoints to avoid startup circularity
 
 
-@router.post("/", response_model=ChatResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/", 
+    response_model=ChatResponse, 
+    status_code=status.HTTP_201_CREATED,
+    dependencies=[Depends(RateLimiter(times=5, minutes=1))]
+)
 async def create_chat(
     chat_data: ChatCreate,
     current_user: User = Depends(get_current_active_user),
@@ -73,7 +79,7 @@ async def delete_chat(
     chat_id: str,
     current_user: User = Depends(get_current_active_user),
     db: AsyncSession = Depends(get_db),
-) -> Any:
+):
     """Delete a chat session."""
     from app.crud.chat import chat as chat_crud
 
@@ -87,9 +93,14 @@ async def delete_chat(
         )
 
     await chat_crud.delete(db, id=chat_id)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
-@router.post("/{chat_id}/messages", response_model=MessageResponse)
+@router.post(
+    "/{chat_id}/messages", 
+    response_model=MessageResponse,
+    dependencies=[Depends(RateLimiter(times=20, minutes=1))]
+)
 async def send_message(
     chat_id: str,
     message_data: MessageCreate,
@@ -98,6 +109,8 @@ async def send_message(
     db: AsyncSession = Depends(get_db),
 ) -> Any:
     """Send a message and get AI response."""
+    from app.services.rag_service import RAGService
+    rag_service = RAGService()
     from app.crud.chat import chat as chat_crud
     from app.crud.message import message as message_crud
 
@@ -122,22 +135,20 @@ async def send_message(
     )
 
     if stream:
-        # Return streaming response
         return StreamingResponse(
             stream_chat_response(chat_id, user_message.id, message_data.content, current_user.id),
             media_type="text/plain"
         )
     else:
-        # Get complete response and return as single message
         response_content = ""
-        async for chunk in rag_service.stream_response(
+        async for item in rag_service.stream_response(
             message=message_data.content,
             user_id=current_user.id,
             chat_id=chat_id,
         ):
-            response_content += chunk
+            if isinstance(item, str):
+                response_content += item
 
-        # Create assistant message
         assistant_message = await message_crud.create(
             db,
             obj_in={
@@ -163,15 +174,20 @@ async def stream_chat_response(
     response_content = ""
 
     try:
-        # Stream response from RAG service
-        async for chunk in rag_service.stream_response(
+        from app.services.rag_service import RAGService
+        rag_service = RAGService()
+        async for item in rag_service.stream_response(
             message=user_content,
             user_id=user_id,
             chat_id=chat_id,
         ):
-            response_content += chunk
-            # Send chunk to client
-            yield f"data: {json.dumps({'chunk': chunk})}\n\n"
+            if isinstance(item, dict):
+                # Send metadata packet
+                yield f"data: {json.dumps(item)}\n\n"
+            else:
+                response_content += item
+                # Send text chunk packet
+                yield f"data: {json.dumps({'chunk': item})}\n\n"
 
         # Save complete message to database
         async with get_async_session() as db:
@@ -186,10 +202,12 @@ async def stream_chat_response(
             await db.commit()
 
     except Exception as e:
-        # Send error to client
-        yield f"data: {json.dumps({'error': str(e)})}\n\n"
+        import traceback
+        error_msg = f"Error in stream_chat_response: {str(e)}"
+        print(error_msg)
+        traceback.print_exc()
+        yield f"data: {json.dumps({'error': error_msg})}\n\n"
     finally:
-        # Send end signal
         yield "data: [DONE]\n\n"
 
 
@@ -205,7 +223,6 @@ async def list_messages(
     from app.crud.chat import chat as chat_crud
     from app.crud.message import message as message_crud
 
-    # Verify chat exists and belongs to user
     chat = await chat_crud.get_user_chat(
         db, id=chat_id, user_id=current_user.id
     )

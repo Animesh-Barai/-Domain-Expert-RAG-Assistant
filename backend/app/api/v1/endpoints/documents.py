@@ -4,6 +4,7 @@ import hashlib
 from typing import Any, List
 
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, status, Response
+from fastapi_limiter.depends import RateLimiter
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_current_active_user, get_db
@@ -18,7 +19,12 @@ document_service = DocumentService()
 storage_service = StorageService()
 
 
-@router.post("/upload", response_model=DocumentResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/upload", 
+    response_model=DocumentResponse, 
+    status_code=status.HTTP_201_CREATED,
+    dependencies=[Depends(RateLimiter(times=10, minutes=5))]
+)
 async def upload_document(
     file: UploadFile = File(...),
     current_user: User = Depends(get_current_active_user),

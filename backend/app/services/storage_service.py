@@ -1,5 +1,6 @@
 """Storage service for MinIO S3."""
 
+import io
 import os
 import uuid
 from typing import Optional
@@ -60,7 +61,7 @@ class StorageService:
             result = self.client.put_object(
                 bucket_name=self.bucket_name,
                 object_name=object_name,
-                data=file_content,
+                data=io.BytesIO(file_content),
                 length=len(file_content),
                 content_type=content_type or "application/octet-stream",
             )

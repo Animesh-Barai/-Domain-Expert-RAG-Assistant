@@ -2,6 +2,7 @@
 
 from datetime import datetime
 from typing import Optional
+from uuid import UUID
 
 from pydantic import BaseModel, Field
 
@@ -19,7 +20,7 @@ class DocumentCreate(DocumentBase):
     file_hash: str = Field(..., description="SHA256 hash of the file")
     file_size: int = Field(..., description="Size of the file in bytes")
     storage_url: str = Field(..., description="URL where the file is stored")
-    user_id: str = Field(..., description="ID of the user who uploaded the document")
+    user_id: UUID = Field(..., description="ID of the user who uploaded the document")
 
 
 class DocumentUpdate(BaseModel):
@@ -31,14 +32,13 @@ class DocumentUpdate(BaseModel):
 
 class DocumentResponse(DocumentBase):
     """Document response schema."""
-    id: str
+    id: UUID
     file_hash: str
     file_size: int
     status: DocumentStatus
     storage_url: str
-    user_id: str
-    processing_error: Optional[str] = None
-    metadata: Optional[dict] = None
+    user_id: UUID
+    error_message: Optional[str] = None
     created_at: datetime
     updated_at: Optional[datetime] = None
 

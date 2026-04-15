@@ -1,0 +1,59 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: 10 10 12; /* Deeper Obsidian Black */
+  --foreground: 229 225 228;
+  --primary: 210 187 255; /* #d2bbff Obsidian Purple */
+  --primary-glow: rgba(210, 187, 255, 0.4);
+  --radius: 0.75rem;
+  
+  /* Obsidian Design System Tokens */
+  --color-surface: #0e0e10;
+  --color-surface-container: #161619;
+  --color-border-ghost: rgba(210, 187, 255, 0.08);
+}
+
+@layer base {
+  body {
+    background-color: #0a0a0c;
+    color: #e5e1e4;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  }
+}
+
+@layer utilities {
+  .ghost-border {
+    @apply border border-[var(--color-border-ghost)] backdrop-blur-md;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+    border-color: rgba(210, 187, 255, 0.15); /* Explicit booster */
+  }
+
+  .glass {
+    @apply bg-zinc-900/60 backdrop-blur-2xl border border-white/10;
+  }
+
+  .ambient-shadow {
+    box-shadow: 0 0 60px -10px color-mix(in srgb, var(--primary-glow) 15%, transparent);
+  }
+
+  .pulse-ribbon {
+    @apply h-[2px] w-full bg-gradient-to-r from-transparent via-primary to-transparent opacity-80;
+    filter: drop-shadow(0 0 8px rgba(210, 187, 255, 0.6));
+  }
+
+  .tracking-display {
+    @apply tracking-[-0.04em] font-medium;
+  }
+
+  .tracking-label {
+    @apply tracking-[0.2em] uppercase font-bold text-[10px];
+  }
+}
+
+.gradient-text {
+  background: linear-gradient(135deg, #d2bbff, #6366F1);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}

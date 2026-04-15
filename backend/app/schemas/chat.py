@@ -2,6 +2,7 @@
 
 from datetime import datetime
 from typing import Optional
+from uuid import UUID
 
 from pydantic import BaseModel, Field
 
@@ -23,8 +24,8 @@ class ChatUpdate(BaseModel):
 
 class ChatResponse(ChatBase):
     """Chat response schema."""
-    id: str
-    user_id: str
+    id: UUID
+    user_id: UUID
     created_at: datetime
     updated_at: Optional[datetime] = None
 

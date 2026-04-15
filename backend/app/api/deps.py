@@ -14,13 +14,10 @@ from app.models.user import User
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl=f"{get_settings().API_V1_STR}/auth/login")
 
 
-async def get_db() -> Generator[AsyncSession, None, None]:
+async def get_db():
     """Get database session."""
     async with get_async_session() as session:
-        try:
-            yield session
-        finally:
-            await session.close()
+        yield session
 
 
 async def get_current_user(

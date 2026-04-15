@@ -17,6 +17,11 @@ class User(BaseModel):
     documents = relationship("Document", back_populates="user", cascade="all, delete-orphan")
     chats = relationship("Chat", back_populates="user", cascade="all, delete-orphan")
 
+    @property
+    def is_active(self):
+        return True
+
+
     def __repr__(self):
         """Return string representation of the user."""
         return f"<User(id={self.id}, email={self.email})>"

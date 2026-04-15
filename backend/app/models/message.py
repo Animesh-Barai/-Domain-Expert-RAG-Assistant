@@ -24,7 +24,8 @@ class Message(BaseModel):
         nullable=False,
         index=True,
     )
-    role = Column(Enum(MessageRole), nullable=False)
+    role = Column(Enum(MessageRole, values_callable=lambda x: [e.value for e in x]), nullable=False)
+
     content = Column(Text, nullable=False)
     # Store document IDs used as citations for this message
     citations = Column(JSON, nullable=True)

@@ -1,12 +1,15 @@
 """Main FastAPI application."""
 
 import asyncio
+import logging
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator
 
+import redis.asyncio as redis
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from fastapi_limiter import FastAPILimiter
 
 from app.api.v1.api import api_router
 from app.core.config import get_settings
@@ -22,6 +25,16 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     # Create tables
     async with async_engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+
+    # Initialize rate limiter
+    try:
+        redis_instance = redis.from_url(
+            settings.REDIS_URL, encoding="utf-8", decode_responses=True
+        )
+        await FastAPILimiter.init(redis_instance)
+        logging.info("Rate limiter initialized successfully")
+    except Exception as e:
+        logging.warning(f"Failed to initialize rate limiter: {e}. Running without rate limits.")
 
     yield
 

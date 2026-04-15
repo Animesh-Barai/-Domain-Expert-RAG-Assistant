@@ -58,13 +58,6 @@ def upgrade() -> None:
     sa.PrimaryKeyConstraint('id')
     )
     op.create_index(op.f('ix_chats_user_id'), 'chats', ['user_id'], unique=False)
-    op.create_table('message_documents',
-    sa.Column('message_id', postgresql.UUID(as_uuid=True), nullable=False),
-    sa.Column('document_id', postgresql.UUID(as_uuid=True), nullable=False),
-    sa.ForeignKeyConstraint(['document_id'], ['documents.id'], ondelete='CASCADE'),
-    sa.ForeignKeyConstraint(['message_id'], ['messages.id'], ondelete='CASCADE'),
-    sa.PrimaryKeyConstraint('message_id', 'document_id')
-    )
     op.create_table('messages',
     sa.Column('id', postgresql.UUID(as_uuid=True), nullable=False),
     sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=True),
@@ -77,6 +70,13 @@ def upgrade() -> None:
     sa.PrimaryKeyConstraint('id')
     )
     op.create_index(op.f('ix_messages_chat_id'), 'messages', ['chat_id'], unique=False)
+    op.create_table('message_documents',
+    sa.Column('message_id', postgresql.UUID(as_uuid=True), nullable=False),
+    sa.Column('document_id', postgresql.UUID(as_uuid=True), nullable=False),
+    sa.ForeignKeyConstraint(['document_id'], ['documents.id'], ondelete='CASCADE'),
+    sa.ForeignKeyConstraint(['message_id'], ['messages.id'], ondelete='CASCADE'),
+    sa.PrimaryKeyConstraint('message_id', 'document_id')
+    )
     # ### end Alembic commands ###
 
 

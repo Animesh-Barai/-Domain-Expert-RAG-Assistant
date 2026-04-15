@@ -28,7 +28,6 @@ class CRUDUser:
         db_obj = User(
             email=obj_in.email,
             hashed_password=get_password_hash(obj_in.password),
-            is_active=True,
         )
         db.add(db_obj)
         await db.commit()
